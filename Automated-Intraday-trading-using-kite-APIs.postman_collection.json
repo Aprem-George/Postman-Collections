@@ -1,0 +1,1626 @@
+{
+	"info": {
+		"_postman_id": "d0756f6a-80b6-49e8-9956-fb22e5b194c9",
+		"name": "Automated Intraday trading using kite APIs",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "36967303"
+	},
+	"item": [
+		{
+			"name": "kite Run",
+			"item": [
+				{
+					"name": "funds and margins",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"//initialize the number of API calls made to check the prices\r",
+									"pm.environment.set(\"numOfApiCalls\",0)\r",
+									"//intialize a counter to start a time period in which the best stock according to criteria is selected.\r",
+									"pm.environment.set(\"cycleStartCounter\", 0)\r",
+									"//store start time of trading day\r",
+									"let startTimeReset =pm.environment.get(\"startTimeReset\")\r",
+									"if(startTimeReset==0){\r",
+									"startTimeReset++\r",
+									"pm.environment.set(\"startTimeReset\",startTimeReset)\r",
+									"pm.environment.set(\"startTimeforTrading\",Date.now())\r",
+									"//intialize an array to store the best stocks found throught the day\r",
+									"pm.environment.set(\"bestSyblArray\",[\"SAMPLESYMBOL\"])\r",
+									"//initialize the number of API calls made to check the prices in trade day\r",
+									"pm.environment.set(\"numOfApiCallsInTradeDay\",0)\r",
+									"}\r",
+									"// if remaining time for intra-day trade is finished then exit the run. \r",
+									"let startTimeforTrading = parseInt(pm.environment.get(\"startTimeforTrading\"))\r",
+									"let remainingTime = parseInt(pm.environment.get(\"remainingTime\"))\r",
+									"const elapsedTime = Date.now() - startTimeforTrading;\r",
+									"if (elapsedTime > remainingTime){\r",
+									"    console.log(\"day trading time exceeded\")\r",
+									"    pm.execution.setNextRequest(\"check positions and exit run\")\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"// Exit run when a certain threshold value of profit or loss is achieved. ",
+									"let currentResponse = pm.response.json();",
+									"let pLExitCriteria = currentResponse.data.equity.utilised.m2m_realised/(currentResponse.data.equity.available.opening_balance*5)",
+									"",
+									"if(pLExitCriteria>=0.05 || pLExitCriteria<= -0.023){",
+									"    console.log(\"profit or loss Limit exceeded\")",
+									"   pm.execution.setNextRequest(\"check positions and exit run\") ",
+									"}else{",
+									"    pm.test(\"Get available fund\", function () {",
+									"    let result;",
+									"    if(currentResponse.data.equity.net){",
+									"        pm.environment.set(\"availableFund\",currentResponse.data.equity.net);",
+									"        result = true;",
+									"    }",
+									"    else{",
+									"        result = false;",
+									"    }",
+									"    pm.expect(result).to.equal(true);",
+									"});",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/user/margins",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"user",
+								"margins"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "check SL order status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//SLorderMade variable is created only to reroute the flow of collection run. This variable is utilized only when there is an unexpected interruption in the run and user want to restart the collection run. \r",
+									"\r",
+									"// If interruption took place after making the SL order then workflow should be in the direction of changing SL trigger price after analysing last traded price (LTP)\r",
+									"if(pm.environment.get(\"SLorderMade\")==\"Yes\"){\r",
+									"let orderIdToFind = pm.environment.get(\"SLorderId\"); \r",
+									"let jsonData = pm.response.json(); \r",
+									"let orderStatus = \"Order ID not found\";\r",
+									"jsonData.data.forEach((order) => {\r",
+									"    if (order.order_id === orderIdToFind) {\r",
+									"        orderStatus = order.status;\r",
+									"    }\r",
+									"});\r",
+									"if(orderStatus==\"TRIGGER PENDING\"){\r",
+									"        pm.execution.setNextRequest(\"Get price and change SL trigger price\")\r",
+									"}\r",
+									"}\r",
+									"// If interruption took place before making the SL order then workflow should be in the direction of checking the status of buy or sell order.\r",
+									"else if(pm.environment.get(\"SLorderMade\")==\"No\"){\r",
+									"       pm.execution.setNextRequest(\"check order status\")\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// In terms of kite APIs each stock is an instrument.\r",
+									"// Assign stock symbols from a predefined array to separate variables  \r",
+									"let instSymbols= JSON.parse(pm.environment.get(\"instSymbols\"))\r",
+									"pm.environment.set(\"sybl1\",instSymbols[0])\r",
+									"pm.environment.set(\"sybl2\",instSymbols[1])\r",
+									"pm.environment.set(\"sybl3\",instSymbols[2])\r",
+									"pm.environment.set(\"sybl4\",instSymbols[3])\r",
+									"pm.environment.set(\"sybl5\",instSymbols[4])\r",
+									"pm.environment.set(\"sybl6\",instSymbols[5])\r",
+									"pm.environment.set(\"sybl7\",instSymbols[6])\r",
+									"pm.environment.set(\"sybl8\",instSymbols[7])\r",
+									"pm.environment.set(\"sybl9\",instSymbols[8])\r",
+									"pm.environment.set(\"sybl10\",instSymbols[9])"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/orders",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get price and Check the criteria for entry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let instSymbols = JSON.parse(pm.environment.get(\"instSymbols\"));",
+									"let currentResponse = pm.response.json();",
+									"let sybl1PercChange = pm.environment.get(\"sybl1PercChange\");",
+									"let sybl2PercChange = pm.environment.get(\"sybl2PercChange\");",
+									"let sybl3PercChange = pm.environment.get(\"sybl3PercChange\");",
+									"let sybl4PercChange = pm.environment.get(\"sybl4PercChange\");",
+									"let sybl5PercChange = pm.environment.get(\"sybl5PercChange\");",
+									"let sybl6PercChange = pm.environment.get(\"sybl6PercChange\");",
+									"let sybl7PercChange = pm.environment.get(\"sybl7PercChange\");",
+									"let sybl8PercChange = pm.environment.get(\"sybl8PercChange\");",
+									"let sybl9PercChange = pm.environment.get(\"sybl9PercChange\");",
+									"let sybl10PercChange = pm.environment.get(\"sybl10PercChange\");",
+									"let numOfApiCallsInTradeDay = pm.environment.get(\"numOfApiCallsInTradeDay\")",
+									"//increment the number of api calls made to monitor the stock price",
+									"numOfApiCallsInTradeDay++",
+									"pm.environment.set(\"numOfApiCallsInTradeDay\",numOfApiCallsInTradeDay)",
+									"// whenever the custom time frame(like the 1 or 3 minute time frame in candle stick chart)ends reset is done for the benchmark stock price. This is to make the price change percentage more aligned with the real time data.",
+									"if(pm.environment.get(\"minBarStartCounter\")==0){",
+									"pm.environment.set(\"sybl1BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[0]].last_price);",
+									"pm.environment.set(\"sybl2BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[1]].last_price);",
+									"pm.environment.set(\"sybl3BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[2]].last_price);",
+									"pm.environment.set(\"sybl4BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[3]].last_price);",
+									"pm.environment.set(\"sybl5BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[4]].last_price);",
+									"pm.environment.set(\"sybl6BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[5]].last_price);",
+									"pm.environment.set(\"sybl7BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[6]].last_price);",
+									"pm.environment.set(\"sybl8BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[7]].last_price);",
+									"pm.environment.set(\"sybl9BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[8]].last_price);",
+									"pm.environment.set(\"sybl10BenchPrice\",currentResponse.data[\"NSE:\"+instSymbols[9]].last_price);",
+									"pm.environment.set(\"minBarStartCounter\",1);",
+									"pm.environment.set(\"numOfApiCallsPerTimFram\",0);",
+									"}",
+									"pm.test(\"Get LTP \", function () {",
+									"    let result = 1;",
+									"    let syblCounter = 0;",
+									"    let sybl1BenchPrice = pm.environment.get(\"sybl1BenchPrice\")",
+									"    let sybl2BenchPrice = pm.environment.get(\"sybl2BenchPrice\")",
+									"    let sybl3BenchPrice = pm.environment.get(\"sybl3BenchPrice\")",
+									"    let sybl4BenchPrice = pm.environment.get(\"sybl4BenchPrice\")",
+									"    let sybl5BenchPrice = pm.environment.get(\"sybl5BenchPrice\")",
+									"    let sybl6BenchPrice = pm.environment.get(\"sybl6BenchPrice\")",
+									"    let sybl7BenchPrice = pm.environment.get(\"sybl7BenchPrice\")",
+									"    let sybl8BenchPrice = pm.environment.get(\"sybl8BenchPrice\")",
+									"    let sybl9BenchPrice = pm.environment.get(\"sybl9BenchPrice\")",
+									"    let sybl10BenchPrice = pm.environment.get(\"sybl10BenchPrice\")",
+									"   // Calculate the percentage change in price of each stock",
+									"    instSymbols.forEach(sybl => {",
+									"        syblCounter++;",
+									"        if (currentResponse.data[\"NSE:\"+sybl].last_price){",
+									"            if (syblCounter==1){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl1BenchPrice)/ sybl1BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl1PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl1PercChange\",sybl1PercChange);",
+									"            }",
+									"            else if (syblCounter==2){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl2BenchPrice)/ sybl2BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl2PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl2PercChange\",sybl2PercChange);",
+									"            }",
+									"            else if (syblCounter==3){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl3BenchPrice)/ sybl3BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl3PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl3PercChange\",sybl3PercChange);",
+									"            }",
+									"            else if (syblCounter==4){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl4BenchPrice)/ sybl4BenchPrice )*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl4PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl4PercChange\",sybl4PercChange);",
+									"            }",
+									"            else if (syblCounter==5){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl5BenchPrice)/ sybl5BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl5PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl5PercChange\",sybl5PercChange);",
+									"            }",
+									"            else if (syblCounter==6){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl6BenchPrice)/ sybl6BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl6PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl6PercChange\",sybl6PercChange);",
+									"            }",
+									"            else if (syblCounter==7){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl7BenchPrice)/ sybl7BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl7PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl7PercChange\",sybl7PercChange);",
+									"            }",
+									"            else if (syblCounter==8){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl8BenchPrice)/ sybl8BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl8PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl8PercChange\",sybl8PercChange);",
+									"            }",
+									"            else if (syblCounter==9){",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl9BenchPrice)/ sybl9BenchPrice)*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl9PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl9PercChange\",sybl9PercChange);",
+									"            }",
+									"            else{",
+									"             let percentageChange=((currentResponse.data[\"NSE:\"+sybl].last_price - sybl10BenchPrice)/ sybl10BenchPrice )*100 ; ",
+									"             percentageChange= parseFloat(percentageChange.toFixed(2))",
+									"             sybl10PercChange.push(percentageChange);",
+									"             pm.environment.set(\"sybl10PercChange\",sybl10PercChange);",
+									"            }",
+									"            result = result * 1;",
+									"        } else {",
+									"            result = result * 0;",
+									"        }",
+									"    });",
+									"    pm.expect(result).to.equal(1);",
+									"});",
+									"",
+									"const startTime = parseInt(pm.environment.get(\"startTime\"));",
+									"const requiredTime = parseInt(pm.environment.get(\"requiredTime\"));",
+									"const timeNow = Date.now()",
+									"const elapsedTime = timeNow - startTime;",
+									"// To montior the duration of analysis cycle",
+									"if (elapsedTime < requiredTime) {",
+									"   // To montior the duration of minBar time frame. Customised the time frame to 1 min",
+									"    if((timeNow - pm.environment.get(\"minBarStartTime\"))>=60000){",
+									"        pm.environment.set(\"minBarStartCounter\",0)",
+									"        pm.environment.set(\"minBarStartTime\",timeNow)",
+									"    }",
+									"",
+									"let numOfApiCalls = pm.environment.get(\"numOfApiCalls\")",
+									"//To count the number of api calls made to fecth price in a analysis cycle ",
+									"numOfApiCalls++",
+									"pm.environment.set(\"numOfApiCalls\",numOfApiCalls)",
+									"// numOfCallsPerSec is used find the practical speed in which price fetching APIs are triggered.",
+									"let numOfCallsPerSec = Math.round((numOfApiCalls/(elapsedTime/1000)))",
+									"let numOfApiCallsPerTimFram=pm.environment.get(\"numOfApiCallsPerTimFram\");",
+									"//To count the number of api calls made to fecth price in a minBar time frame ",
+									"numOfApiCallsPerTimFram++",
+									"pm.environment.set(\"numOfApiCallsPerTimFram\",numOfApiCallsPerTimFram);",
+									"// accParaGap is a variable used in the calculation of price acceleration. Price acceleration is monitored to identify breakouts in stock price. Here accParaGap is utilized to calculate acceleration in a 3 sec time frame.",
+									"let accParaGap = numOfCallsPerSec*3 //Number of calls in 3 sec",
+									"// Stock selection is done only after completion of 4 minutes an analysis cycle. This is to acquire a minimum data set before making an assumption or prediction.",
+									" if((numOfApiCalls >=(numOfCallsPerSec*240))){",
+									"   let acclrationArray = [] ",
+									"   // Store the acceleration between most recent price and price before 3 seconds. This acceleration is calculated for all stocks in the environment file and are stored to a single array.",
+									"   acclrationArray.push((sybl1PercChange[numOfApiCalls-1]-sybl1PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl2PercChange[numOfApiCalls-1]-sybl2PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl3PercChange[numOfApiCalls-1]-sybl3PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl4PercChange[numOfApiCalls-1]-sybl4PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl5PercChange[numOfApiCalls-1]-sybl5PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl6PercChange[numOfApiCalls-1]-sybl6PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl7PercChange[numOfApiCalls-1]-sybl7PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl8PercChange[numOfApiCalls-1]-sybl8PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl9PercChange[numOfApiCalls-1]-sybl9PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   acclrationArray.push((sybl10PercChange[numOfApiCalls-1]-sybl10PercChange[(numOfApiCalls-accParaGap)-1])/3);",
+									"   // Find the greatest absolute value among these acceleration values.",
+									" let greatestAbsoluteValue = -Infinity;",
+									" let indexOfGreatestValue = -1;",
+									" let originalValue = 0;",
+									" acclrationArray.forEach((currentValue, index) => {",
+									"    let absoluteValue = Math.abs(currentValue);",
+									"    if (absoluteValue > greatestAbsoluteValue) {",
+									"        greatestAbsoluteValue = absoluteValue;",
+									"        indexOfGreatestValue = index;",
+									"        originalValue = currentValue;",
+									"    }",
+									" });",
+									" // if the greatest absolute accceleration is greater or equal to 0.14(custom value) then that stock is considered as the best stock at the moment. ",
+									" if(greatestAbsoluteValue >= 0.14){",
+									"    // Find whether the acceleration was negetive or positive so that we can determine whether to short sell or go long.",
+									"    let accSign = originalValue > 0 ? 'positive' : 'negative';",
+									"    if(accSign=='positive'){",
+									"       pm.environment.set(\"buyOrSell\",\"BUY\")",
+									"    }",
+									"    else{",
+									"       pm.environment.set(\"buyOrSell\",\"SELL\")",
+									"    }",
+									"  let bestSyblPercChange =[]",
+									"  let bestSyblArray=pm.environment.get(\"bestSyblArray\")",
+									"  //Store the stock symbol, last traded price(LTP) and price change percentages of best stock  ",
+									"  if(indexOfGreatestValue==0){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[0])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[0]].last_price)",
+									"     bestSyblPercChange = sybl1PercChange",
+									" }",
+									" else if(indexOfGreatestValue==1){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[1])    ",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[1]].last_price)",
+									"     bestSyblPercChange = sybl2PercChange",
+									" }",
+									" else if(indexOfGreatestValue==2){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[2])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[2]].last_price)",
+									"     bestSyblPercChange = sybl3PercChange ",
+									" }",
+									" else if(indexOfGreatestValue==3){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[3])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[3]].last_price)",
+									"     bestSyblPercChange = sybl4PercChange",
+									" }",
+									"  else if(indexOfGreatestValue==4){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[4])    ",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[4]].last_price)",
+									"     bestSyblPercChange = sybl5PercChange",
+									" }",
+									" else if(indexOfGreatestValue==5){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[5])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[5]].last_price)",
+									"     bestSyblPercChange = sybl6PercChange   ",
+									" }",
+									" else if(indexOfGreatestValue==6){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[6])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[6]].last_price)",
+									"     bestSyblPercChange = sybl7PercChange",
+									" }",
+									"  else if(indexOfGreatestValue==7){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[7])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[7]].last_price)",
+									"     bestSyblPercChange = sybl8PercChange   ",
+									" }",
+									" else if(indexOfGreatestValue==8){",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[8])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[8]].last_price)",
+									"     bestSyblPercChange = sybl9PercChange",
+									" }",
+									" else{",
+									"    pm.environment.set(\"bestSyblWRTAcc\",instSymbols[9])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[9]].last_price)",
+									"     bestSyblPercChange = sybl10PercChange",
+									"    }",
+									"  // bestSyblChangAvg is used to determine the direction of price change in the analysis cycle. If the sum of all price change percentages are positive then price is going up and vice versa. ",
+									"  const bestSyblChangAvg = bestSyblPercChange.slice(0, (numOfApiCalls-accParaGap)).reduce((acc, curr) => acc + curr, 0);",
+									"  let bestSyblAvgSign = bestSyblChangAvg > 0 ? 'positive' : 'negative';",
+									"  let bestSyblWRTAcc=pm.environment.get(\"bestSyblWRTAcc\")",
+									"  if(/* check if the direction of breakout is same as the direction of price change in analysis cycle */bestSyblAvgSign==accSign && (/* Avoid same stock being selected as the best stock consecutively through breakout selection*/bestSyblWRTAcc!==bestSyblArray[(bestSyblArray.length-1)])){",
+									"    //If the best stock meets all criteria reset the analysis cycle values.",
+									"    pm.environment.set(\"highAccOccured\", true)",
+									"    pm.environment.set(\"numOfApiCalls\",0)",
+									"    // Make market order for the best stock",
+									"  pm.execution.setNextRequest('make order for the best stock');",
+									"  }else{pm.execution.setNextRequest('Get price and Check the criteria for entry')}",
+									"  }else{pm.execution.setNextRequest('Get price and Check the criteria for entry')}  ",
+									" }else{pm.execution.setNextRequest('Get price and Check the criteria for entry')} ",
+									"}",
+									"else { ",
+									"    // reset some of the analysis cycle parameters since the analysis time frame has elapsed.  ",
+									"pm.environment.set(\"numOfApiCalls\",0)    ",
+									"pm.environment.set(\"highAccOccured\", false) ",
+									"// Take the sum of all the price change percentages for each stock. This will provide an average of price change.  ",
+									"const sybl1ChangeAvg = sybl1PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0);",
+									"const sybl2ChangeAvg = sybl2PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl3ChangeAvg = sybl3PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl4ChangeAvg = sybl4PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl5ChangeAvg = sybl5PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl6ChangeAvg = sybl6PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl7ChangeAvg = sybl7PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl8ChangeAvg = sybl8PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl9ChangeAvg = sybl9PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"const sybl10ChangeAvg = sybl10PercChange.reduce((accumulator, currentValue) => accumulator + currentValue, 0)",
+									"// Find the average price change of all the stocks and the greatest absolute value among these.Through this we can understand the current market trend not just the trend of an individual stock. And will also help us to find the stock with greatest upward or downward trend.",
+									"// Assign the average price change values to stocks as key value pairs.",
+									"let variables = { sybl1ChangeAvg, sybl2ChangeAvg, sybl3ChangeAvg, sybl4ChangeAvg, sybl5ChangeAvg, sybl6ChangeAvg, sybl7ChangeAvg, sybl8ChangeAvg, sybl9ChangeAvg, sybl10ChangeAvg };",
+									"let greatestAbsoluteValue = -Infinity;",
+									"let variableWithGreatestAbsoluteValue = '';",
+									"let originalValue = 0;",
+									"for (let key in variables) {",
+									"    let absoluteValue = Math.abs(variables[key]);",
+									"    if (absoluteValue > greatestAbsoluteValue) {",
+									"        greatestAbsoluteValue = absoluteValue;",
+									"        variableWithGreatestAbsoluteValue = key;",
+									"        originalValue = variables[key];",
+									"    }",
+									"}",
+									"// To find whether the stock with greatest absolute average price change has an upward or downward trend",
+									"let sign = originalValue > 0 ? 'positive' : 'negative';",
+									"    if(sign=='positive'){",
+									"       pm.environment.set(\"buyOrSell\",\"BUY\")",
+									"    }",
+									"    else{",
+									"       pm.environment.set(\"buyOrSell\",\"SELL\")",
+									"    }",
+									"// to find how many stocks under analysis has an upward or down ward trend.",
+									"let positiveCount = 0;",
+									"let negativeCount = 0;",
+									"for (let key in variables) {",
+									"    if (variables[key] > 0) {",
+									"        positiveCount++;",
+									"    } else if (variables[key] < 0) {",
+									"        negativeCount++;",
+									"    }",
+									"}",
+									"// Select an instrument as best stock only if other instruments under analysis also have a similar upward or downward trend. ",
+									"if((sign=='positive' && positiveCount>=4)||(sign=='negative' && negativeCount>=3)){  ",
+									"//Locate the stock symbol with greatest absolute average price change and store it's LTP    ",
+									"if(variableWithGreatestAbsoluteValue==\"sybl1ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[0])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[0]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl2ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[1])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[1]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl3ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[2])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[2]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl4ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[3])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[3]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl5ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[4])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[4]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl6ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[5])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[5]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl7ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[6])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[6]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl8ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[7])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[7]].last_price)",
+									"}",
+									"else if(variableWithGreatestAbsoluteValue==\"sybl9ChangeAvg\"){",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[8])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[8]].last_price)",
+									"}",
+									"else{",
+									"    pm.environment.set(\"bestSyblWRTAvg\",instSymbols[9])",
+									"    pm.environment.set(\"bestStockLTP\",currentResponse.data[\"NSE:\"+instSymbols[9]].last_price)",
+									"}",
+									"let bestSyblArray=pm.environment.get(\"bestSyblArray\")",
+									"let bestSyblWRTAvg=pm.environment.get(\"bestSyblWRTAvg\")",
+									"// Avoid same stock being selected as the best stock consecutively.",
+									"if(bestSyblArray[(bestSyblArray.length-1)]==bestSyblWRTAvg){",
+									"    // if same stock is being selected as the best stock consecutively give a buffer time",
+									"    if (elapsedTime < requiredTime+180000){",
+									"       pm.execution.setNextRequest('Get price and Check the criteria for entry')",
+									"    }else{",
+									"        pm.environment.set(\"cycleStartCounter\",0)",
+									"        pm.execution.setNextRequest('Get price and Check the criteria for entry')",
+									"    }",
+									"}",
+									"}else{",
+									"    // if other instruments under analysis doesn't have a similar upward or downward trend give a buffer time.",
+									"    if (elapsedTime < requiredTime+180000){",
+									"       pm.execution.setNextRequest('Get price and Check the criteria for entry')",
+									"    }else{",
+									"        pm.environment.set(\"cycleStartCounter\",0)",
+									"        pm.execution.setNextRequest('Get price and Check the criteria for entry')",
+									"    }",
+									"}",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if((pm.environment.get(\"cycleStartCounter\")==0)){\r",
+									"// Set the start time in milliseconds\r",
+									"let startTime= Date.now()\r",
+									"// Set the analyzis cycle start time \r",
+									"pm.environment.set(\"startTime\", startTime);\r",
+									"// Set duration of analysis cycle\r",
+									"pm.environment.set(\"requiredTime\", 2700000);\r",
+									"//Indicator to indentify the start of analysis cycle\r",
+									"pm.environment.set(\"cycleStartCounter\", 1)\r",
+									"// minBar can be consider as a 1 or 3 minute candle stick\r",
+									"pm.environment.set(\"minBarStartTime\", startTime);\r",
+									"//a parameter to identify when to start the next time frame in terms of min bar \r",
+									"pm.environment.set(\"minBarStartCounter\",0);\r",
+									"//initialize arrays to store percentage of price change of stocks.\r",
+									"pm.environment.set(\"sybl1PercChange\",[])\r",
+									"pm.environment.set(\"sybl2PercChange\",[])\r",
+									"pm.environment.set(\"sybl3PercChange\",[])\r",
+									"pm.environment.set(\"sybl4PercChange\",[])\r",
+									"pm.environment.set(\"sybl5PercChange\",[])\r",
+									"pm.environment.set(\"sybl6PercChange\",[])\r",
+									"pm.environment.set(\"sybl7PercChange\",[])\r",
+									"pm.environment.set(\"sybl8PercChange\",[])\r",
+									"pm.environment.set(\"sybl9PercChange\",[])\r",
+									"pm.environment.set(\"sybl10PercChange\",[])\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/quote?i=NSE:{{sybl1}}&i=NSE:{{sybl2}}&i=NSE:{{sybl3}}&i=NSE:{{sybl4}}&i=NSE:{{sybl5}}&i=NSE:{{sybl6}}&i=NSE:{{sybl7}}&i=NSE:{{sybl8}}&i=NSE:{{sybl9}}&i=NSE:{{sybl10}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"quote"
+							],
+							"query": [
+								{
+									"key": "i",
+									"value": "NSE:{{sybl1}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl2}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl3}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl4}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl5}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl6}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl7}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl8}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl9}}"
+								},
+								{
+									"key": "i",
+									"value": "NSE:{{sybl10}}"
+								}
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "make order for the best stock",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is not 200\", function () {",
+									"    pm.expect(pm.response.code).not.to.equal(200);",
+									"    if (pm.response.code !== 200) {",
+									"        console.log(\"Response status code is not 200\");",
+									"        console.log(\"Response code: \", pm.response.code);",
+									"        console.log(\"Response body: \", pm.response.text());",
+									"        // If make order API fails go back to analysis cycle",
+									"        pm.execution.setNextRequest('Get price and Check the criteria for entry')",
+									"    }",
+									"});",
+									"let currentResponse = pm.response.json();",
+									"pm.test(\"Get order id\", function () {",
+									"    if(currentResponse.data.order_id){",
+									"        //Get order id",
+									"        pm.environment.set(\"orderId\",currentResponse.data.order_id)",
+									"        // To indicate whether SL order was made after a buy or sell order. This will come handy in case of any interruption in collection run.",
+									"        pm.environment.set(\"SLorderMade\",\"No\")",
+									"        // Counter to indicate the restart of analysis cycle.",
+									"        pm.environment.set(\"cycleStartCounter\", 0)",
+									"        // prevChangePercArray is an array to store price change percentages after making an SL order.",
+									"        pm.environment.set(\"prevChangePercArray\",[0])",
+									"        // Store the stocks which were traded in the day. ",
+									"        if(pm.environment.get(\"highAccOccured\")==true){",
+									"            let bestSyblArray=pm.environment.get(\"bestSyblArray\");",
+									"            bestSyblArray.push(pm.environment.get(\"bestSyblWRTAcc\"));",
+									"            pm.environment.set(\"bestSyblArray\",bestSyblArray);",
+									"        }",
+									"        else{",
+									"            let bestSyblArray=pm.environment.get(\"bestSyblArray\");",
+									"            bestSyblArray.push(pm.environment.get(\"bestSyblWRTAvg\"));",
+									"            pm.environment.set(\"bestSyblArray\",bestSyblArray);",
+									"        }",
+									"    }",
+									"});",
+									"// Choose the transaction type(buy or sell) for the Stop loss order according to the market order done.",
+									"if((pm.environment.get(\"buyOrSell\")==\"BUY\")){",
+									"pm.environment.set(\"exitTransType\", \"SELL\")",
+									"}",
+									"else{",
+									"pm.environment.set(\"exitTransType\", \"BUY\") ",
+									"}",
+									"//initialize stop loss ",
+									"pm.environment.set(\"stopLoss\",0)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"\r",
+									"let bestStockLTP = pm.environment.get(\"bestStockLTP\")\r",
+									"// calculate the quantity of best stock that that can be traded w.r.t available fund.\r",
+									"pm.environment.set(\"quantity\", Math.floor(pm.environment.get(\"availableFund\")/bestStockLTP))\r",
+									"/*Multipled by 5 to factor in the 5x leverage of Intra day trade */\r",
+									"let quantity= (Math.floor(((pm.environment.get(\"availableFund\")-600)/bestStockLTP)))*5\r",
+									"//if the best was selected through breakout criteria\r",
+									"if(pm.environment.get(\"highAccOccured\")==true){\r",
+									"    let bestSybl= pm.environment.get(\"bestSyblWRTAcc\");\r",
+									"    pm.environment.set(\"bestStock\",bestSybl)\r",
+									"}\r",
+									"//if the best was selected through greatest average price change criteria\r",
+									"else{\r",
+									"    let bestSybl= pm.environment.get(\"bestSyblWRTAvg\");\r",
+									"    pm.environment.set(\"bestStock\",bestSybl)    \r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tradingsymbol",
+									"value": "{{bestStock}}",
+									"type": "text"
+								},
+								{
+									"key": "exchange",
+									"value": "NSE",
+									"type": "text"
+								},
+								{
+									"key": "transaction_type",
+									"value": "{{buyOrSell}}",
+									"type": "text"
+								},
+								{
+									"key": "order_type",
+									"value": "MARKET",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "{{quantity}}",
+									"type": "text"
+								},
+								{
+									"key": "product",
+									"value": "MIS",
+									"type": "text"
+								},
+								{
+									"key": "validity",
+									"value": "DAY",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://api.kite.trade/orders/regular",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders",
+								"regular"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "check order status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let orderIdToFind = pm.environment.get(\"orderId\"); \r",
+									"let jsonData = pm.response.json(); \r",
+									"let orderStatus = \"Order ID not found\";\r",
+									"jsonData.data.forEach((order) => {\r",
+									"    if (order.order_id === orderIdToFind) {\r",
+									"        orderStatus = order.status;\r",
+									"    }\r",
+									"});\r",
+									"pm.test(\"Order status found\", function () {\r",
+									"    pm.expect(orderStatus).not.to.equal(\"Order ID not found\");\r",
+									"});\r",
+									"// Check the status till order is complete\r",
+									"if(orderStatus!==\"COMPLETE\"){\r",
+									"    pm.execution.setNextRequest('check order status');\r",
+									"}\r",
+									"else{\r",
+									"// Once market order is done store the average order price. \r",
+									"    let orderAvgprice = 0.00;\r",
+									"    jsonData.data.forEach((order) => {\r",
+									"    if (order.order_id === orderIdToFind) {\r",
+									"        orderAvgprice = order.average_price;\r",
+									"    }\r",
+									"});\r",
+									"pm.environment.set(\"orderAvgprice\",orderAvgprice)\r",
+									"// Calculate stop loss depending on whether the market order was a buy or sell order. Stoploss is calculated based on a 1.4 % baseline\r",
+									"if((pm.environment.get(\"buyOrSell\")==\"BUY\")){\r",
+									"let stopLoss = orderAvgprice - (orderAvgprice * 0.014)\r",
+									"pm.environment.set(\"stopLoss\",stopLoss)\r",
+									"}\r",
+									"else{\r",
+									"    let stopLoss = orderAvgprice + (orderAvgprice * 0.014)\r",
+									"pm.environment.set(\"stopLoss\",stopLoss)\r",
+									"}\r",
+									"}\r",
+									"// initialize price change percentange arrays before the next analysis cycle.\r",
+									"pm.environment.set(\"sybl1PercChange\",[])\r",
+									"pm.environment.set(\"sybl2PercChange\",[])\r",
+									"pm.environment.set(\"sybl3PercChange\",[])\r",
+									"pm.environment.set(\"sybl4PercChange\",[])\r",
+									"pm.environment.set(\"sybl5PercChange\",[])\r",
+									"pm.environment.set(\"sybl6PercChange\",[])\r",
+									"pm.environment.set(\"sybl7PercChange\",[])\r",
+									"pm.environment.set(\"sybl8PercChange\",[])\r",
+									"pm.environment.set(\"sybl9PercChange\",[])\r",
+									"pm.environment.set(\"sybl10PercChange\",[])"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/orders",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "make SL order for the best stock",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    if (pm.response.code==200) {",
+									"    // Indicate SL order was made. This is to handle the workflow in case of an interruption.",
+									"      pm.environment.set(\"SLorderMade\",\"Yes\")",
+									"      // intialize the counter indicating the number of times the SL order was modified. ",
+									"      pm.environment.set(\"SLModifyCount\",0)",
+									"    }",
+									"    else{",
+									"        // if SL order API fails restart the collection run.",
+									"        pm.environment.set(\"SLorderMade\",\"NA\")",
+									"        pm.execution.setNextRequest('funds and margins')",
+									"    }",
+									"});",
+									"// Get SL order id",
+									"let currentResponse = pm.response.json();",
+									"pm.test(\"Get order id\", function () {",
+									"    if(currentResponse.data.order_id){",
+									"        pm.environment.set(\"SLorderId\",currentResponse.data.order_id)",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let stopLoss = pm.environment.get(\"stopLoss\")\r",
+									"// Round the stop loss to a whole number or number with 0.5 as decimal value. \r",
+									"function roundToNearest5or0(num) {\r",
+									"    let rounded = Math.round(num * 100) / 100;\r",
+									"    let [integerPart, decimalPart] = rounded.toString().split('.');\r",
+									"    decimalPart = (decimalPart || '00').padEnd(2, '0');\r",
+									"    let lastDigit = parseInt(decimalPart[1], 10);\r",
+									"    lastDigit = lastDigit < 5 ? 0 : 5;\r",
+									"    let adjustedDecimalPart = decimalPart[0] + lastDigit;\r",
+									"    let adjustedNumber = parseFloat(`${integerPart}.${adjustedDecimalPart}`);\r",
+									"    return adjustedNumber;\r",
+									"}\r",
+									"stopLoss=roundToNearest5or0(stopLoss)\r",
+									"pm.environment.set(\"stopLoss\",stopLoss)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tradingsymbol",
+									"value": "{{bestStock}}",
+									"type": "text"
+								},
+								{
+									"key": "exchange",
+									"value": "NSE",
+									"type": "text"
+								},
+								{
+									"key": "transaction_type",
+									"value": "{{exitTransType}}",
+									"type": "text"
+								},
+								{
+									"key": "order_type",
+									"value": "SL-M",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "{{quantity}}",
+									"type": "text"
+								},
+								{
+									"key": "product",
+									"value": "MIS",
+									"type": "text"
+								},
+								{
+									"key": "validity",
+									"value": "DAY",
+									"type": "text"
+								},
+								{
+									"key": "trigger_price",
+									"value": "{{stopLoss}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://api.kite.trade/orders/regular",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders",
+								"regular"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Get price and change SL trigger price",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									" let currentResponse = pm.response.json();",
+									" let chosenSybl = pm.environment.get(\"bestStock\")",
+									" // Get the current price of traded stock",
+									" let currentPrice = currentResponse.data[\"NSE:\"+chosenSybl].last_price;",
+									" let stopLoss =pm.environment.get(\"stopLoss\")",
+									" let orderAvgprice =pm.environment.get(\"orderAvgprice\")",
+									" // percentage of change in price is calculated w.r.t LTP and average order price",
+									" let changePerc = (currentPrice - orderAvgprice)/orderAvgprice",
+									" //Store change percentage values in prevChangePercArray",
+									" let prevChangePercArray = pm.environment.get(\"prevChangePercArray\")",
+									" prevChangePercArray.push(changePerc)",
+									" // If the market order was buy order",
+									" if((pm.environment.get(\"buyOrSell\")==\"BUY\")){// check whether the most recent change percentage is greater than the previous change percentage by a predefined value. Here I kept the predefined value as 0.023.",
+									"   if((prevChangePercArray[prevChangePercArray.length-1]-prevChangePercArray[prevChangePercArray.length-2]) >= 0.00023){",
+									"    // if the above criteria is met store the change percentage to prevChangePercArray and calculate the new stoploss. New stoploss is calculated by multipling the average order price with difference between latest and previous change percentage values and adding it to the previous stoploss. ",
+									"   pm.environment.set(\"prevChangePercArray\",prevChangePercArray) ",
+									"   pm.environment.set(\"stopLoss\",(stopLoss + (orderAvgprice * (prevChangePercArray[prevChangePercArray.length-1]-prevChangePercArray[prevChangePercArray.length-2]))))",
+									"   // Modify the SL order with new stoploss",
+									"   pm.execution.setNextRequest(\"modify SL order for the best stock\") ",
+									"  }",
+									" }",
+									"// If the market order was sell order",
+									" else{ ",
+									"   if((prevChangePercArray[prevChangePercArray.length-1]-prevChangePercArray[prevChangePercArray.length-2]) <= -0.00023)//In case of sell order the most recent change percentage should be lesser than the previous change percentage by a predefined value. Here I kept the predefined value as -0.023.",
+									"   {",
+									"   pm.environment.set(\"prevChangePercArray\",prevChangePercArray) ",
+									"   pm.environment.set(\"stopLoss\",(stopLoss + (orderAvgprice * (prevChangePercArray[prevChangePercArray.length-1]-prevChangePercArray[prevChangePercArray.length-2]))))",
+									"      // Modify the SL order with new stoploss",
+									"   pm.execution.setNextRequest(\"modify SL order for the best stock\") ",
+									"  }",
+									" }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/quote?i=NSE:{{bestStock}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"quote"
+							],
+							"query": [
+								{
+									"key": "i",
+									"value": "NSE:{{bestStock}}"
+								}
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "check SL order status(Modify order or not)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let startTimeforTrading = parseInt(pm.environment.get(\"startTimeforTrading\"))\r",
+									"let remainingTime = parseInt(pm.environment.get(\"remainingTime\"))\r",
+									"const elapsedTime = Date.now() - startTimeforTrading;\r",
+									"// If SL order wasn't executed before the auto square off time make an exit order.\r",
+									"if (elapsedTime > remainingTime/*remaining time should be entered in the environment file. Here I calculated the remaining time keeping 2.30 pm as deadline*/+2100000/*This additional time was added to caliberate the apt deadline before auto square off*/){\r",
+									"    console.log('exit time reached')\r",
+									"    pm.execution.setNextRequest('make exit order if SL is not executed')\r",
+									"}else{\r",
+									"    let jsonData = pm.response.json(); \r",
+									"    let orderIdToFind = pm.environment.get(\"SLorderId\"); \r",
+									"    let orderStatus = \"Order ID not found\";\r",
+									"    jsonData.data.forEach((order) => {\r",
+									"    if (order.order_id === orderIdToFind) {\r",
+									"        orderStatus = order.status;\r",
+									"    }\r",
+									"   });\r",
+									"   // change the direction of workflow according to the status of SL order.\r",
+									"  if(orderStatus==\"TRIGGER PENDING\"){\r",
+									"  pm.execution.setNextRequest('Get price and change SL trigger price');\r",
+									"  }\r",
+									"  else if(orderStatus==\"COMPLETE\"){\r",
+									"    pm.environment.set(\"SLorderMade\",\"Complete\")\r",
+									"    pm.execution.setNextRequest('funds and margins');  \r",
+									"  }\r",
+									"  else if(orderStatus==\"CANCELLED\"){\r",
+									"  pm.execution.setNextRequest('funds and margins');\r",
+									"  pm.environment.set(\"SLorderMade\",\"NA\")  \r",
+									"  }\r",
+									"  else{\r",
+									"   pm.execution.setNextRequest('make exit order if SL is not executed')\r",
+									"  }\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/orders",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "modify SL order for the best stock",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let SLModifyCount = pm.environment.get(\"SLModifyCount\")\r",
+									"// Kite modify API has a limitation that a perticular SL order can only be modified 25 times. Hence we are deleting the existing SL order and making a new one after 24 th modification.  \r",
+									"if(SLModifyCount==23){\r",
+									" pm.execution.setNextRequest(\"Delete existing SL order\")   \r",
+									"}\r",
+									"// Round the stop loss to a whole number or number with 0.5 as decimal value.\r",
+									"let stopLoss = pm.environment.get(\"stopLoss\")\r",
+									"function roundToNearest5or0(num) {\r",
+									"    let rounded = Math.round(num * 100) / 100;\r",
+									"    let [integerPart, decimalPart] = rounded.toString().split('.');\r",
+									"    decimalPart = (decimalPart || '00').padEnd(2, '0');\r",
+									"    let lastDigit = parseInt(decimalPart[1], 10);\r",
+									"    lastDigit = lastDigit < 5 ? 0 : 5;\r",
+									"    let adjustedDecimalPart = decimalPart[0] + lastDigit;\r",
+									"    let adjustedNumber = parseFloat(`${integerPart}.${adjustedDecimalPart}`);\r",
+									"    return adjustedNumber;\r",
+									"}\r",
+									"stopLoss=roundToNearest5or0(stopLoss)\r",
+									"pm.environment.set(\"stopLoss\",stopLoss)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let SLModifyCount = pm.environment.get(\"SLModifyCount\")",
+									"if(SLModifyCount!==23){",
+									"let currentResponse = pm.response.json();",
+									"if(currentResponse.status !== \"success\"){//if SL order modification fails delete existing SL order and create new.",
+									"    pm.execution.setNextRequest(\"Delete existing SL order\")",
+									"}",
+									"else if(currentResponse.status==\"success\"){",
+									"    //If modification is successfull increase the SL modification count and check for price change again.",
+									"    SLModifyCount++",
+									"    pm.environment.set(\"SLModifyCount\",SLModifyCount)",
+									"    pm.execution.setNextRequest(\"Get price and change SL trigger price\")",
+									"}",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tradingsymbol",
+									"value": "{{bestStock}}",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "exchange",
+									"value": "NSE",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "transaction_type",
+									"value": "{{exitTransType}}",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "order_type",
+									"value": "SL-M",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "{{quantity}}",
+									"type": "text"
+								},
+								{
+									"key": "product",
+									"value": "MIS",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "validity",
+									"value": "DAY",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "trigger_price",
+									"value": "{{stopLoss}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://api.kite.trade/orders/regular/{{SLorderId}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders",
+								"regular",
+								"{{SLorderId}}"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "make exit order if SL is not executed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"make exit for the best stock\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									"// SLModifyCount is initialized since the workflow's direction is determined based on the value of SLModifyCount after the \"Delete existing SL order\" API call.",
+									"pm.environment.set(\"SLModifyCount\",0)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tradingsymbol",
+									"value": "{{bestStock}}",
+									"type": "text"
+								},
+								{
+									"key": "exchange",
+									"value": "NSE",
+									"type": "text"
+								},
+								{
+									"key": "transaction_type",
+									"value": "{{exitTransType}}",
+									"type": "text"
+								},
+								{
+									"key": "order_type",
+									"value": "MARKET",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "{{quantity}}",
+									"type": "text"
+								},
+								{
+									"key": "product",
+									"value": "MIS",
+									"type": "text"
+								},
+								{
+									"key": "validity",
+									"value": "DAY",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://api.kite.trade/orders/regular",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders",
+								"regular"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete existing SL order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//if SL order was deleted due to Kite's modification restriction go back to the creation of new SL order\r",
+									"let SLModifyCount = pm.environment.get(\"SLModifyCount\")\r",
+									"if(SLModifyCount==23){\r",
+									"    pm.execution.setNextRequest(\"make SL order for the best stock\")\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/orders/regular/{{SLorderId}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"orders",
+								"regular",
+								"{{SLorderId}}"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "check positions and exit run",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"let responseData = pm.response.json();",
+									"// Extract symbols from 'day' where quantity != 0. This is to check if any of the positions are unfinalized. ",
+									"let nonFinalizedSymbols = responseData.data.day",
+									"    .filter(item => item.quantity !== 0)",
+									"    .map(item => item.tradingsymbol);",
+									"if (nonFinalizedSymbols.length !==0) {",
+									"    console.log(\"Non-finalized symbols:\", nonFinalizedSymbols);",
+									"}",
+									"// Indicates the starting time of a trading day.",
+									"pm.environment.set(\"startTimeReset\",0)",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Kite-Version",
+								"value": "3",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "token {{apiKey}}:{{kiteAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.kite.trade/portfolio/positions",
+							"protocol": "https",
+							"host": [
+								"api",
+								"kite",
+								"trade"
+							],
+							"path": [
+								"portfolio",
+								"positions"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}

@@ -1,0 +1,399 @@
+{
+	"id": "dc41c5bf-cf6c-4fb4-baf8-64f27429b661",
+	"name": "Kite env",
+	"values": [
+		{
+			"key": "kiteAccessToken",
+			"value": "VkdBB22rL6vJQzQQ8VCUyNiiw3kq52fI",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "apiKey",
+			"value": "keyvalue",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "requestToken",
+			"value": "UP8lggqVgh9oPPFHWd6HVG7GT23lDPQK",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "checkSum",
+			"value": "226088acd4ea788c16550b0cbdd641de4c875ed16ba052af4c0e8ea5b97196ae",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "availableFund",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "intSyblCount",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "currentSybl",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "instSymbols",
+			"value": "[\"ASIANENE\",\"AXISCADES\",\"BALUFORGE\",\"ELGIEQUIP\",\"GOCLCORP\",\"HGS\",\"JINDALPOLY\",\"PCBL\",\"RANEENGINE\",\"UFLEX\"]",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "sybl1PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl2PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl3PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl4PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl5PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "startTime",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "cycleStartCounter",
+			"value": "0",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "sybl1BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl2BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl3BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl4BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl5BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "numOfApiCalls",
+			"value": "0",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "bestSyblWRTAvg",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "highAccOccured",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "buyOrSell",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "bestStockLTP",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "quantity",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "bestStock",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "SLModifyCount",
+			"value": "0",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "orderId",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "orderAvgprice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "stopLoss",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "exitTransType",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "SLorderId",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "SLorderMade",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "sybl6PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl7PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl8PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl6BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl8BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "remainingTime",
+			"value": "14400000",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "startTimeReset",
+			"value": "0",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "bestSyblArray",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl1",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl2",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl3",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl4",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl5",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl6",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl7",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl8",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl9",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl10",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "requiredTime",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl9PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl10PercChange",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl7BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl9BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "sybl10BenchPrice",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "prevChangePercArray",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "startTimeforTrading",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "minBarStartTime",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "minBarStartCounter",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "numOfApiCallsIn1Min",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "numOfApiCallsInTradeDay",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "numOfApiCallsPerTimFram",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2025-02-09T17:35:26.605Z",
+	"_postman_exported_using": "Postman/11.31.0"
+}

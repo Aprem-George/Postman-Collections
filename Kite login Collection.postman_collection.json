@@ -1,0 +1,189 @@
+{
+	"info": {
+		"_postman_id": "03485ebd-2e4c-4d7f-901a-e985a9b11ed0",
+		"name": "Kite login Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "36967303"
+	},
+	"item": [
+		{
+			"name": "Kite login URL for request token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"        if (pm.response.code !== 200) {",
+							"        console.log(\"Response status code is not 200\");",
+							"        console.log(\"Response code: \", pm.response.code);",
+							"        console.log(\"Response body: \", pm.response.text());",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"Status code is not 200\", function () {",
+							"    pm.expect(pm.response.code).not.to.equal(200);",
+							"    if (pm.response.code !== 200) {",
+							"        console.log(\"Response status code is not 200\");",
+							"        console.log(\"Response code: \", pm.response.code);",
+							"        console.log(\"Response body: \", pm.response.text());",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"prevChangePercArray\",[0])\r",
+							"console.log(pm.environment.get(\"prevChangePercArray\"))"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://kite.zerodha.com/connect/login?v=3&api_key=keyvalue",
+					"protocol": "https",
+					"host": [
+						"kite",
+						"zerodha",
+						"com"
+					],
+					"path": [
+						"connect",
+						"login"
+					],
+					"query": [
+						{
+							"key": "v",
+							"value": "3"
+						},
+						{
+							"key": "api_key",
+							"value": "keyvalue"
+						}
+					]
+				},
+				"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+			},
+			"response": []
+		},
+		{
+			"name": "get access token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Get access token\", function () {",
+							"    var currentResponse = pm.response.json();",
+							"    if(currentResponse.data.access_token){",
+							"        pm.environment.set(\"kiteAccessToken\",currentResponse.data.access_token)",
+							"        var result = true",
+							"",
+							"    }",
+							"    else{",
+							"        var result= false",
+							"    }",
+							"    pm.expect(result).to.equal(true)",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.log(\"status\")"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Kite-Version",
+						"value": "3",
+						"type": "text"
+					},
+					{
+						"key": "api_key",
+						"value": "ksb6o7uc3mbch2f4",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "request_token",
+						"value": "59VHlbf868yC5U2RnZsIRUmATezyqpkz",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "checksum",
+						"value": "6D88F3C50A592FCA0907B80EE8EC5E1BC1AEE5E5A2EB542419B2FA0D2D2291BD",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "api_key",
+							"value": "{{apiKey}}",
+							"type": "text"
+						},
+						{
+							"key": "request_token",
+							"value": "{{requestToken}}",
+							"type": "text"
+						},
+						{
+							"key": "checksum",
+							"value": "{{checkSum}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://api.kite.trade/session/token",
+					"protocol": "https",
+					"host": [
+						"api",
+						"kite",
+						"trade"
+					],
+					"path": [
+						"session",
+						"token"
+					]
+				},
+				"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+			},
+			"response": []
+		}
+	]
+}
